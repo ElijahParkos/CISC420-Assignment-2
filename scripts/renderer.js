@@ -1,4 +1,5 @@
 import * as CG from './transforms.js';
+import { Matrix } from './matrix.js';
 
 class Renderer {
     // canvas:              object ({id: __, width: __, height: __})
@@ -146,6 +147,24 @@ class Renderer {
         //     (translation, scaling, and rotation)
         
         
+    }
+
+    // TODO:
+    // radius: we know what ts is
+    // sides: more sides = smoother circle.
+    drawCircle(radius, sides) {
+        let vertices = [];
+
+        for (let i = 0; i < sides; i++) {
+            let theta = (2 * Math.PI * i) / sides;
+
+            let x; // TODO: figure out the formula 
+            let y;
+
+            // Push x and y into vertices, [x, y, 1]
+
+        }
+        return vertices;
     }
     
     // vertex_list:  array of object [Matrix(3, 1), Matrix(3, 1), ..., Matrix(3, 1)]
