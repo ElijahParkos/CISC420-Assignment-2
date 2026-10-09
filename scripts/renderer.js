@@ -86,6 +86,9 @@ class Renderer {
     //
     updateTransforms(time, delta_time) {
         // TODO: update any transformations needed for animation
+        let currentModel = this.models[`slide${this.slide_idx}`];
+
+        
     }
     
     //
