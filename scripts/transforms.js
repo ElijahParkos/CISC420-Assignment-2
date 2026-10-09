@@ -12,30 +12,28 @@ function mat3x3Identity(mat3x3) {
 
 // Set values of existing 3x3 matrix to the translate matrix
 function mat3x3Translate(mat3x3, tx, ty) {
-    const transform_matrix = [[1, 0, tx],
-                              [0, 1, ty],
-                              [0, 0, 1]];
-    mat3x3.values = Matrix.multiply([mat3x3.values, transform_matrix]);
+     mat3x3.values = [[1, 0, tx],
+                      [0, 1, ty],
+                      [0, 0, 1 ]];
 
 }
 
 // Set values of existing 3x3 matrix to the scale matrix
 function mat3x3Scale(mat3x3, sx, sy) {
-    const scale_matrix = [[sx, 0, 0],
-                          [0, sy, 0],
-                          [0, 0, 1]];
-    mat3x3.values = Matrix.multiply([mat3x3.values, scale_matrix]);
+    mat3x3.values = [[sx, 0, 0],
+                     [0, sy, 0],
+                     [0, 0,  1]];
 }
 
 // Set values of existing 3x3 matrix to the rotate matrix
 function mat3x3Rotate(mat3x3, theta) {
-    const radians = (theta*Math.PI)/180;
+    let radians = theta * Math.PI / 180;
+
     let cosTheta = Math.cos(radians);
     let sinTheta = Math.sin(radians);
-    const rotation_matrix = [[cosTheta, -(sinTheta), 0],
-                             [sinTheta,  cosTheta, 0],
-                             [0, 0, 1]];
-    mat3x3.values = Matrix.multiply([mat3x3.values, rotation_matrix]);
+    mat3x3.values = [[cosTheta, -(sinTheta), 0],
+                     [sinTheta,  cosTheta,   0],
+                     [0,         0,          1]];
 }
 
 // Create a new 3-component vector with values x,y,w
