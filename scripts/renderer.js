@@ -1,4 +1,5 @@
 import * as CG from './transforms.js';
+import {Matrix} from './matrix.js';
 
 class Renderer {
     // canvas:              object ({id: __, width: __, height: __})
@@ -25,7 +26,18 @@ class Renderer {
                         CG.Vector3(400, 450, 1),
                         CG.Vector3(300, 300, 1)
                     ],
-                    transform: null
+                    transform: null,
+                    state: {
+                        midpoint: {x: 400, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 10, y: 10},
+                        rotate: 0,
+                        scale: {x: 0, y: 0}
+                    }
                 }
             ],
             slide1: [],
@@ -85,9 +97,41 @@ class Renderer {
 
     //
     updateTransforms(time, delta_time) {
-        // TODO: update any transformations needed for animation
+        const dt_actual = delta_time/1000;
         let currentModel = this.models[`slide${this.slide_idx}`];
+        for(const model of currentModel) {
+            // Update state based on velocity
+            model.state.offset.x += model.velocity.translate.x * dt_actual;
+            model.state.offset.y += model.velocity.translate.y * dt_actual;
 
+            model.state.currentRotation += model.velocity.rotate * dt_actual;
+
+            model.state.currentScale.x += model.velocity.scale.x * dt_actual;
+            model.state.currentScale.y += model.velocity.scale.y * dt_actual;
+
+            // Initialize new matrices
+            const translatePoint = new Matrix(3,3);
+            const rotate = new Matrix(3,3);
+            const scale = new Matrix(3,3);
+            const translateOrigin = new Matrix(3,3);
+
+            // Translate to new point
+            const newX = model.state.midpoint.x + model.state.offset.x;
+            const newY = model.state.midpoint.y + model.state.offset.y
+            CG.mat3x3Translate(translatePoint, newX, newY);
+
+            // Rotate
+            CG.mat3x3Rotate(rotate, model.state.currentRotation);
+
+            // Scale
+            CG.mat3x3Scale(scale, model.state.currentScale.x, model.state.currentScale.y);
+
+            // Translate to origin
+            CG.mat3x3Translate(translateOrigin, -model.state.midpoint.x, -model.state.midpoint.y);
+
+            // Multiply all matrices together
+            model.transform = Matrix.multiply([translatePoint, rotate, scale, translateOrigin]);
+        }
         
     }
     
@@ -114,12 +158,22 @@ class Renderer {
     //
     drawSlide0() {
         // TODO: draw bouncing ball (circle that changes direction whenever it hits an edge)
-        
+        let teal = [0, 128, 128, 255];
+        const currentModel = this.models.slide0;
+        for(const model of currentModel) {
+            const verticies = [];
+            for(const pt of model.vertices) {
+                const vertex = Matrix.multiply([model.transform, pt]);
+                verticies.push(vertex);
+            }
+
+            this.drawConvexPolygon(verticies, teal);
+        }
         
         // Following lines are example of drawing a single polygon
         // (this should be removed/edited after you implement the slide)
-        let teal = [0, 128, 128, 255];
-        this.drawConvexPolygon(this.models.slide0[0].vertices, teal);
+        
+        
     }
 
     //
