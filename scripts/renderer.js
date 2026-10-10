@@ -20,12 +20,8 @@ class Renderer {
             slide0: [
                 // example model (diamond) -> should be replaced with actual model
                 {
-                    vertices: [
-                        CG.Vector3(400, 150, 1),
-                        CG.Vector3(500, 300, 1),
-                        CG.Vector3(400, 450, 1),
-                        CG.Vector3(300, 300, 1)
-                    ],
+                    vertices: this.createCircleVertices(400, 300, 50, 40),
+                    radius: 50,
                     transform: null,
                     state: {
                         midpoint: {x: 400, y: 300},
@@ -34,7 +30,7 @@ class Renderer {
                         currentScale: {x: 1, y: 1}
                     },
                     velocity: {
-                        translate: {x: 10, y: 10},
+                        translate: {x: 50, y: 50},
                         rotate: 0,
                         scale: {x: 0, y: 0}
                     }
@@ -103,6 +99,33 @@ class Renderer {
             // Update state based on velocity
             model.state.offset.x += model.velocity.translate.x * dt_actual;
             model.state.offset.y += model.velocity.translate.y * dt_actual;
+
+            // Slide 0 collison
+            if (this.slide_idx == 0) {
+                const centerX = model.state.midpoint.x + model.state.offset.x; 
+                const centerY = model.state.midpoint.y + model.state.offset.y; 
+                const radius = model.radius;
+
+                // Right wall
+                if (centerX + radius >= this.canvas.width && model.velocity.translate.x > 0) {
+                    model.velocity.translate.x *= -1;
+                }
+
+                // Left Wall
+                 if (centerX - radius <= 0 && model.velocity.translate.x < 0) {
+                    model.velocity.translate.x *= -1;
+                }   
+                
+                // Bottom Floor
+                if (centerY + radius >= this.canvas.height && model.velocity.translate.y > 0) {
+                    model.velocity.translate.y *= -1;
+                }
+
+                // Top Cieling 
+                if (centerY - radius <= 0 && model.velocity.translate.y < 0) {
+                    model.velocity.translate.y *= -1;
+                }
+            }
 
             model.state.currentRotation += model.velocity.rotate * dt_actual;
 
@@ -216,6 +239,22 @@ class Renderer {
         }
         this.ctx.closePath();
         this.ctx.fill();
+    }
+
+    //Makes a polygon with lotta points 
+    createCircleVertices(centerX, centerY, radius, numPoints) {
+        const vertices = [];
+
+        for (let i = 0; i < numPoints; i++) {
+            const theta = (i / numPoints) * 2 * Math.PI;
+
+            const x = centerX + radius * Math.cos(theta);
+            const y = centerY + radius * Math.sin(theta);
+
+            vertices.push(CG.Vector3(x, y, 1));
+        }
+
+        return vertices;
     }
 };
 
