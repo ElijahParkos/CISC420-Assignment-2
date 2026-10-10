@@ -157,7 +157,6 @@ class Renderer {
 
     //
     drawSlide0() {
-        // TODO: draw bouncing ball (circle that changes direction whenever it hits an edge)
         let teal = [0, 128, 128, 255];
         const currentModel = this.models.slide0;
         for(const model of currentModel) {
