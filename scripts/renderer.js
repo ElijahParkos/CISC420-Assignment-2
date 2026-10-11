@@ -36,10 +36,90 @@ class Renderer {
                     }
                 }
             ],
-            slide1: [],
+            slide1: [
+                {
+                    vertices: this.createCircleVertices(200, 200, 75, 5),
+                    radius: 75,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 200, y: 200},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 100,
+                        scale: {x: 0, y: 0}
+                    }
+                },
+                {
+                    vertices: this.createCircleVertices(500, 400, 120, 6),
+                    radius: 120,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 500, y: 400},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: -75,
+                        scale: {x: 0, y: 0}
+                    }
+                },
+                {
+                    vertices: this.createCircleVertices(450, 150, 25, 3),
+                    radius: 25,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 450, y: 150},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 300,
+                        scale: {x: 0, y: 0}
+                    }
+                }
+            ],
             slide2: [],
-            slide3: []
+            slide3: [
+                {
+                    vertices: this.createCircleVertices(400, 300, 50, 40),
+                    radius: 50,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 400, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 50, y: 50},
+                        rotate: 0,
+                        scale: {x: 0, y: 0}
+                    }
+                }
+            ]
         };
+
+        this.directionInput = {x: 0, y: 0};
+        window.addEventListener('keydown', (e)=>{
+            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') this.directionInput.x = -1;
+            else if(e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 1;
+
+            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown') this.directionInput.y = -1;
+            else if(e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 1;
+        });
+        window.addEventListener('keyup', (e)=>{
+            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 0;
+
+            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 0;
+        });
     }
 
     // flag:  bool
@@ -95,13 +175,21 @@ class Renderer {
     updateTransforms(time, delta_time) {
         const dt_actual = delta_time/1000;
         let currentModel = this.models[`slide${this.slide_idx}`];
+
+        if(this.slide_idx === 3) {
+            const player = currentModel[0];
+            player.velocity.translate.x = 200 * this.directionInput.x;
+            player.velocity.translate.y = 200 * this.directionInput.y;
+            //this.directionInput = {x: 0, y:0}
+        }
+
         for(const model of currentModel) {
             // Update state based on velocity
             model.state.offset.x += model.velocity.translate.x * dt_actual;
             model.state.offset.y += model.velocity.translate.y * dt_actual;
 
             // Slide 0 collison
-            if (this.slide_idx == 0) {
+            if (this.slide_idx === 0) {
                 const centerX = model.state.midpoint.x + model.state.offset.x; 
                 const centerY = model.state.midpoint.y + model.state.offset.y; 
                 const radius = model.radius;
@@ -200,8 +288,17 @@ class Renderer {
 
     //
     drawSlide1() {
-        // TODO: draw at least 3 polygons that spin about their own centers
-        //   - have each polygon spin at a different speed / direction
+        let red = [146, 43, 62, 255];
+        const currentModel = this.models.slide1;
+        for(const model of currentModel) {
+            const verticies = [];
+            for(const pt of model.vertices) {
+                const vertex = Matrix.multiply([model.transform, pt]);
+                verticies.push(vertex);
+            }
+
+            this.drawConvexPolygon(verticies, red);
+        }
         
         
     }
@@ -217,12 +314,23 @@ class Renderer {
 
     //
     drawSlide3() {
-        // TODO: get creative!
-        //   - animation should involve all three basic transformation types
-        //     (translation, scaling, and rotation)
+        let teal = [0, 128, 128, 255];
+        const currentModel = this.models.slide3;
+
+        for(const model of currentModel) {
+            const verticies = [];
+            for(const pt of model.vertices) {
+                const vertex = Matrix.multiply([model.transform, pt]);
+                verticies.push(vertex);
+            }
+
+            this.drawConvexPolygon(verticies, teal);
+        }
         
         
     }
+
+    
     
     // vertex_list:  array of object [Matrix(3, 1), Matrix(3, 1), ..., Matrix(3, 1)]
     // color:        array of int [R, G, B, A]
