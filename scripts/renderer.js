@@ -1,4 +1,5 @@
 import * as CG from './transforms.js';
+import {Matrix} from './matrix.js';
 
 class Renderer {
     // canvas:              object ({id: __, width: __, height: __})
@@ -19,19 +20,144 @@ class Renderer {
             slide0: [
                 // example model (diamond) -> should be replaced with actual model
                 {
-                    vertices: [
-                        CG.Vector3(400, 150, 1),
-                        CG.Vector3(500, 300, 1),
-                        CG.Vector3(400, 450, 1),
-                        CG.Vector3(300, 300, 1)
-                    ],
-                    transform: null
+                    vertices: this.createCircleVertices(400, 300, 50, 40),
+                    radius: 50,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 400, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 50, y: 50},
+                        rotate: 0,
+                        scale: {x: 0, y: 0}
+                    }
                 }
             ],
-            slide1: [],
-            slide2: [],
-            slide3: []
+            slide1: [
+                {
+                    vertices: this.createCircleVertices(200, 200, 75, 5),
+                    radius: 75,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 200, y: 200},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 100,
+                        scale: {x: 0, y: 0}
+                    }
+                },
+                {
+                    vertices: this.createCircleVertices(500, 400, 120, 6),
+                    radius: 120,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 500, y: 400},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: -75,
+                        scale: {x: 0, y: 0}
+                    }
+                },
+                {
+                    vertices: this.createCircleVertices(450, 150, 25, 3),
+                    radius: 25,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 450, y: 150},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 300,
+                        scale: {x: 0, y: 0}
+                    }
+                }
+            ],
+            slide2: [
+                {
+                    vertices: this.createCircleVertices(250, 300, 75, 5),
+                    radius: 75,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 250, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 0,
+                        scale: {x: 0.5, y: 0.5}
+                    },
+                    minScale: {x: 0.5, y: 0.5},
+                    maxScale: {x: 2, y: 2}                   
+                },
+
+                    {
+                    vertices: this.createCircleVertices(550, 300, 75, 4),
+                    radius: 75,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 550, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 0,
+                        scale: {x: 0.75, y: 0.3}
+                    },
+                    minScale: {x: 0.5, y: 0.75},
+                    maxScale: {x: 2, y: 1.5}
+                }
+            ],
+            slide3: [
+                {
+                    vertices: this.createCircleVertices(400, 300, 50, 40),
+                    radius: 50,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 400, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 50, y: 50},
+                        rotate: 0,
+                        scale: {x: 0, y: 0}
+                    }
+                }
+            ]
         };
+
+        this.directionInput = {x: 0, y: 0};
+        window.addEventListener('keydown', (e)=>{
+            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') this.directionInput.x = -1;
+            else if(e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 1;
+
+            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown') this.directionInput.y = -1;
+            else if(e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 1;
+        });
+        window.addEventListener('keyup', (e)=>{
+            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 0;
+
+            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 0;
+        });
     }
 
     // flag:  bool
@@ -85,9 +211,95 @@ class Renderer {
 
     //
     updateTransforms(time, delta_time) {
-        // TODO: update any transformations needed for animation
+        const dt_actual = delta_time/1000;
         let currentModel = this.models[`slide${this.slide_idx}`];
 
+        if(this.slide_idx === 3) {
+            const player = currentModel[0];
+            player.velocity.translate.x = 200 * this.directionInput.x;
+            player.velocity.translate.y = 200 * this.directionInput.y;
+            //this.directionInput = {x: 0, y:0}
+        }
+
+        for(const model of currentModel) {
+            // Update state based on velocity
+            model.state.offset.x += model.velocity.translate.x * dt_actual;
+            model.state.offset.y += model.velocity.translate.y * dt_actual;
+
+            // Slide 0 collison
+            if (this.slide_idx === 0) {
+                const centerX = model.state.midpoint.x + model.state.offset.x; 
+                const centerY = model.state.midpoint.y + model.state.offset.y; 
+                const radius = model.radius;
+
+                // Right wall
+                if (centerX + radius >= this.canvas.width && model.velocity.translate.x > 0) {
+                    model.velocity.translate.x *= -1;
+                }
+
+                // Left Wall
+                 if (centerX - radius <= 0 && model.velocity.translate.x < 0) {
+                    model.velocity.translate.x *= -1;
+                }   
+                
+                // Bottom Floor
+                if (centerY + radius >= this.canvas.height && model.velocity.translate.y > 0) {
+                    model.velocity.translate.y *= -1;
+                }
+
+                // Top Cieling 
+                if (centerY - radius <= 0 && model.velocity.translate.y < 0) {
+                    model.velocity.translate.y *= -1;
+                }
+            }
+
+            model.state.currentRotation += model.velocity.rotate * dt_actual;
+
+                if (this.slide_idx === 2) {
+                    if (model.state.currentScale.x >= model.maxScale.x && model.velocity.scale.x > 0) {
+                        model.velocity.scale.x *= -1;
+                    }
+
+                    if (model.state.currentScale.x <= model.minScale.x && model.velocity.scale.x < 0) {
+                        model.velocity.scale.x *= -1;
+                    }
+
+                    if (model.state.currentScale.y >= model.maxScale.y && model.velocity.scale.y > 0) {
+                        model.velocity.scale.y *= -1;
+                    }
+
+                    if (model.state.currentScale.y <= model.minScale.y && model.velocity.scale.y < 0) {
+                        model.velocity.scale.y *= -1;
+                    }
+                }
+            
+
+            model.state.currentScale.x += model.velocity.scale.x * dt_actual;
+            model.state.currentScale.y += model.velocity.scale.y * dt_actual;
+
+            // Initialize new matrices
+            const translatePoint = new Matrix(3,3);
+            const rotate = new Matrix(3,3);
+            const scale = new Matrix(3,3);
+            const translateOrigin = new Matrix(3,3);
+
+            // Translate to new point
+            const newX = model.state.midpoint.x + model.state.offset.x;
+            const newY = model.state.midpoint.y + model.state.offset.y
+            CG.mat3x3Translate(translatePoint, newX, newY);
+
+            // Rotate
+            CG.mat3x3Rotate(rotate, model.state.currentRotation);
+
+            // Scale
+            CG.mat3x3Scale(scale, model.state.currentScale.x, model.state.currentScale.y);
+
+            // Translate to origin
+            CG.mat3x3Translate(translateOrigin, -model.state.midpoint.x, -model.state.midpoint.y);
+
+            // Multiply all matrices together
+            model.transform = Matrix.multiply([translatePoint, rotate, scale, translateOrigin]);
+        }
         
     }
     
@@ -113,40 +325,84 @@ class Renderer {
 
     //
     drawSlide0() {
-        // TODO: draw bouncing ball (circle that changes direction whenever it hits an edge)
-        
+        let teal = [0, 128, 128, 255];
+        const currentModel = this.models.slide0;
+        for(const model of currentModel) {
+            const verticies = [];
+            for(const pt of model.vertices) {
+                const vertex = Matrix.multiply([model.transform, pt]);
+                verticies.push(vertex);
+            }
+
+            this.drawConvexPolygon(verticies, teal);
+        }
         
         // Following lines are example of drawing a single polygon
         // (this should be removed/edited after you implement the slide)
-        let teal = [0, 128, 128, 255];
-        this.drawConvexPolygon(this.models.slide0[0].vertices, teal);
+        
+        
     }
 
     //
     drawSlide1() {
-        // TODO: draw at least 3 polygons that spin about their own centers
-        //   - have each polygon spin at a different speed / direction
+        let red = [146, 43, 62, 255];
+        const currentModel = this.models.slide1;
+        for(const model of currentModel) {
+            const verticies = [];
+            for(const pt of model.vertices) {
+                const vertex = Matrix.multiply([model.transform, pt]);
+                verticies.push(vertex);
+            }
+
+            this.drawConvexPolygon(verticies, red);
+        }
         
         
     }
 
     //
     drawSlide2() {
+        
         // TODO: draw at least 2 polygons grow and shrink about their own centers
         //   - have each polygon grow / shrink different sizes
         //   - try at least 1 polygon that grows / shrinks non-uniformly in the x and y directions
+
+        let purple = [120, 60, 180, 255];
+        const currentModel = this.models.slide2;
+
+        for(const model of currentModel) {
+            const vertices = [];
+
+            for (const pt of model.vertices) {
+                const vertex  = Matrix.multiply([model.transform, pt]);
+                vertices.push(vertex);
+            }
+
+            this.drawConvexPolygon(vertices, purple);
+        }
 
 
     }
 
     //
     drawSlide3() {
-        // TODO: get creative!
-        //   - animation should involve all three basic transformation types
-        //     (translation, scaling, and rotation)
+        let teal = [0, 128, 128, 255];
+        const currentModel = this.models.slide3;
+
+        for(const model of currentModel) {
+            const verticies = [];
+            for(const pt of model.vertices) {
+                const vertex = Matrix.multiply([model.transform, pt]);
+                verticies.push(vertex);
+            }
+
+            this.drawConvexPolygon(verticies, teal);
+        }
         
         
     }
+
+    
     
     // vertex_list:  array of object [Matrix(3, 1), Matrix(3, 1), ..., Matrix(3, 1)]
     // color:        array of int [R, G, B, A]
@@ -163,6 +419,22 @@ class Renderer {
         }
         this.ctx.closePath();
         this.ctx.fill();
+    }
+
+    //Makes a polygon with lotta points 
+    createCircleVertices(centerX, centerY, radius, numPoints) {
+        const vertices = [];
+
+        for (let i = 0; i < numPoints; i++) {
+            const theta = (i / numPoints) * 2 * Math.PI;
+
+            const x = centerX + radius * Math.cos(theta);
+            const y = centerY + radius * Math.sin(theta);
+
+            vertices.push(CG.Vector3(x, y, 1));
+        }
+
+        return vertices;
     }
 };
 
