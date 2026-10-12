@@ -86,7 +86,45 @@ class Renderer {
                     }
                 }
             ],
-            slide2: [],
+            slide2: [
+                {
+                    vertices: this.createCircleVertices(250, 300, 75, 5),
+                    radius: 75,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 250, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 0,
+                        scale: {x: 0.5, y: 0.5}
+                    },
+                    minScale: {x: 0.5, y: 0.5},
+                    maxScale: {x: 2, y: 2}                   
+                },
+
+                    {
+                    vertices: this.createCircleVertices(550, 300, 75, 4),
+                    radius: 75,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 550, y: 300},
+                        offset: {x: 0, y: 0},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: 1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: 0,
+                        scale: {x: 0.75, y: 0.3}
+                    },
+                    minScale: {x: 0.5, y: 0.75},
+                    maxScale: {x: 2, y: 1.5}
+                }
+            ],
             slide3: [
                 {
                     vertices: this.createCircleVertices(400, 300, 50, 40),
@@ -217,6 +255,25 @@ class Renderer {
 
             model.state.currentRotation += model.velocity.rotate * dt_actual;
 
+                if (this.slide_idx === 2) {
+                    if (model.state.currentScale.x >= model.maxScale.x && model.velocity.scale.x > 0) {
+                        model.velocity.scale.x *= -1;
+                    }
+
+                    if (model.state.currentScale.x <= model.minScale.x && model.velocity.scale.x < 0) {
+                        model.velocity.scale.x *= -1;
+                    }
+
+                    if (model.state.currentScale.y >= model.maxScale.y && model.velocity.scale.y > 0) {
+                        model.velocity.scale.y *= -1;
+                    }
+
+                    if (model.state.currentScale.y <= model.minScale.y && model.velocity.scale.y < 0) {
+                        model.velocity.scale.y *= -1;
+                    }
+                }
+            
+
             model.state.currentScale.x += model.velocity.scale.x * dt_actual;
             model.state.currentScale.y += model.velocity.scale.y * dt_actual;
 
@@ -305,9 +362,24 @@ class Renderer {
 
     //
     drawSlide2() {
+        
         // TODO: draw at least 2 polygons grow and shrink about their own centers
         //   - have each polygon grow / shrink different sizes
         //   - try at least 1 polygon that grows / shrinks non-uniformly in the x and y directions
+
+        let purple = [120, 60, 180, 255];
+        const currentModel = this.models.slide2;
+
+        for(const model of currentModel) {
+            const vertices = [];
+
+            for (const pt of model.vertices) {
+                const vertex  = Matrix.multiply([model.transform, pt]);
+                vertices.push(vertex);
+            }
+
+            this.drawConvexPolygon(vertices, purple);
+        }
 
 
     }
