@@ -127,37 +127,57 @@ class Renderer {
             ],
             slide3: [
                 {
-                    vertices: this.createCircleVertices(400, 300, 50, 40),
+                    vertices: this.createSemiCircleVertices(50, 0, 50, 40),
                     radius: 50,
                     transform: null,
                     state: {
-                        midpoint: {x: 400, y: 300},
-                        offset: {x: 0, y: 0},
+                        midpoint: {x: 0, y: 0},
+                        offset: {x: 400, y: 300},
                         currentRotation: 0,
                         currentScale: {x: 1, y: 1}
                     },
                     velocity: {
-                        translate: {x: 50, y: 50},
-                        rotate: 0,
+                        translate: {x: 0, y: 0},
+                        rotate: 50,
                         scale: {x: 0, y: 0}
-                    }
+                    },
+                    minRotation: 0,
+                    maxRotation: 15
+                },
+                {
+                    vertices: this.createSemiCircleVertices(50, 0, 50, 40),
+                    radius: 50,
+                    transform: null,
+                    state: {
+                        midpoint: {x: 0, y: 0},
+                        offset: {x: 400, y: 300},
+                        currentRotation: 0,
+                        currentScale: {x: 1, y: -1}
+                    },
+                    velocity: {
+                        translate: {x: 0, y: 0},
+                        rotate: -50,
+                        scale: {x: 0, y: 0}
+                    },
+                    minRotation: -15,
+                    maxRotation: 0
                 }
             ]
         };
 
         this.directionInput = {x: 0, y: 0};
         window.addEventListener('keydown', (e)=>{
-            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') this.directionInput.x = -1;
-            else if(e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 1;
+            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') this.directionInput = {x: -1, y: 0};
+            else if(e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput = {x: 1, y: 0};
 
-            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown') this.directionInput.y = -1;
-            else if(e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 1;
+            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown') this.directionInput = {x: 0, y: -1};
+            else if(e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput = {x: 0, y: 1};
         });
-        window.addEventListener('keyup', (e)=>{
-            if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 0;
+        // window.addEventListener('keyup', (e)=>{
+        //     if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 0;
 
-            if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 0;
-        });
+        //     if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 0;
+        // });
     }
 
     // flag:  bool
@@ -215,10 +235,39 @@ class Renderer {
         let currentModel = this.models[`slide${this.slide_idx}`];
 
         if(this.slide_idx === 3) {
-            const player = currentModel[0];
-            player.velocity.translate.x = 200 * this.directionInput.x;
-            player.velocity.translate.y = 200 * this.directionInput.y;
-            //this.directionInput = {x: 0, y:0}
+            const pacTop = currentModel[0];
+            pacTop.velocity.translate.x = 200 * this.directionInput.x;
+            pacTop.velocity.translate.y = 200 * this.directionInput.y;
+            const pacBottom = currentModel[1];
+            pacBottom.velocity.translate.x = 200 * this.directionInput.x;
+            pacBottom.velocity.translate.y = 200 * this.directionInput.y;
+
+            if(this.directionInput.x === -1) {
+                pacTop.state.currentScale = {x: -1, y: -1};
+                pacBottom.state.currentScale = {x: -1, y: 1};
+            } else {
+                pacTop.state.currentScale = {x: 1, y: 1};
+                pacBottom.state.currentScale = {x: 1, y: -1};
+            }
+
+
+            if(pacTop.state.currentRotation > pacTop.maxRotation) {
+                pacTop.state.currentRotation = pacTop.maxRotation;
+                pacTop.velocity.rotate = -50;
+            }
+            if(pacTop.state.currentRotation < pacTop.minRotation) {
+                pacTop.state.currentRotation = pacTop.minRotation;
+                pacTop.velocity.rotate = 50;
+            }
+
+            if(pacBottom.state.currentRotation > pacBottom.maxRotation) {
+                pacBottom.state.currentRotation = pacBottom.maxRotation;
+                pacBottom.velocity.rotate = -50;
+            }
+            if(pacBottom.state.currentRotation < pacBottom.minRotation) {
+                pacBottom.state.currentRotation = pacBottom.minRotation;
+                pacBottom.velocity.rotate = 50;
+            }
         }
 
         for(const model of currentModel) {
@@ -386,18 +435,26 @@ class Renderer {
 
     //
     drawSlide3() {
-        let teal = [0, 128, 128, 255];
+        let yellow = [255, 255, 0, 255];
         const currentModel = this.models.slide3;
+        const pacTop = currentModel[0];
+        const pacBottom = currentModel[1];
 
-        for(const model of currentModel) {
-            const verticies = [];
-            for(const pt of model.vertices) {
-                const vertex = Matrix.multiply([model.transform, pt]);
-                verticies.push(vertex);
-            }
-
-            this.drawConvexPolygon(verticies, teal);
+        let verticies = [];
+        for(const pt of pacTop.vertices) {
+            const vertex = Matrix.multiply([pacTop.transform, pt]);
+            verticies.push(vertex);
         }
+
+        this.drawConvexPolygon(verticies, yellow);
+
+        verticies = [];
+        for(const pt of pacBottom.vertices) {
+            const vertex = Matrix.multiply([pacBottom.transform, pt]);
+            verticies.push(vertex);
+        }
+
+        this.drawConvexPolygon(verticies, yellow);
         
         
     }
@@ -421,7 +478,7 @@ class Renderer {
         this.ctx.fill();
     }
 
-    //Makes a polygon with lotta points 
+    //Makes a regular polygon with numPoints points to simulate a circle 
     createCircleVertices(centerX, centerY, radius, numPoints) {
         const vertices = [];
 
@@ -436,6 +493,23 @@ class Renderer {
 
         return vertices;
     }
+
+    //Makes half of a regular polygon to simulate a semicircle
+    createSemiCircleVertices(centerX, centerY, radius, numPoints) {
+        const vertices = [];
+
+        for (let i = 0; i <= numPoints; i++) {
+            const theta = (i / numPoints) * Math.PI;    
+
+            const x = centerX + radius * Math.cos(theta);
+            const y = centerY + radius * Math.sin(theta);
+
+            vertices.push(CG.Vector3(x, y, 1));
+        }
+
+        return vertices;
+    }
+
 };
 
 export { Renderer };
