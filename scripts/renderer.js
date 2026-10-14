@@ -23,7 +23,7 @@ class Renderer {
                     vertices: this.createCircleVertices(400, 300, 50, 40),
                     radius: 50,
                     transform: null,
-                    state: {
+                    state: {                                                                                              
                         midpoint: {x: 400, y: 300},
                         offset: {x: 0, y: 0},
                         currentRotation: 0,
@@ -49,9 +49,9 @@ class Renderer {
                     },
                     velocity: {
                         translate: {x: 0, y: 0},
-                        rotate: 100,
+                        rotate: 150,
                         scale: {x: 0, y: 0}
-                    }
+                    },
                 },
                 {
                     vertices: this.createCircleVertices(500, 400, 120, 6),
@@ -67,7 +67,10 @@ class Renderer {
                         translate: {x: 0, y: 0},
                         rotate: -75,
                         scale: {x: 0, y: 0}
-                    }
+                    },
+                    minRotationVelocity: -125,
+                    maxRotationVelocity: 0,
+                    rotateAccel: 0.5
                 },
                 {
                     vertices: this.createCircleVertices(450, 150, 25, 3),
@@ -81,9 +84,12 @@ class Renderer {
                     },
                     velocity: {
                         translate: {x: 0, y: 0},
-                        rotate: 300,
+                        rotate: 50,
                         scale: {x: 0, y: 0}
-                    }
+                    },
+                    minRotationVelocity: -500,
+                    maxRotationVelocity: 500,
+                    rotateAccel: 1
                 }
             ],
             slide2: [
@@ -127,7 +133,7 @@ class Renderer {
             ],
             slide3: [
                 {
-                    vertices: this.createSemiCircleVertices(50, 0, 50, 40),
+                    vertices: this.createSemiCircleVertices(50, 0, 50, 20),
                     radius: 50,
                     transform: null,
                     state: {
@@ -145,7 +151,7 @@ class Renderer {
                     maxRotation: 15
                 },
                 {
-                    vertices: this.createSemiCircleVertices(50, 0, 50, 40),
+                    vertices: this.createSemiCircleVertices(50, 0, 50, 20),
                     radius: 50,
                     transform: null,
                     state: {
@@ -173,11 +179,7 @@ class Renderer {
             if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown') this.directionInput = {x: 0, y: -1};
             else if(e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput = {x: 0, y: 1};
         });
-        // window.addEventListener('keyup', (e)=>{
-        //     if(e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft' || e.key.toLowerCase() === 'd' || e.key === 'ArrowRight') this.directionInput.x = 0;
-
-        //     if(e.key.toLowerCase() === 's' || e.key === 'ArrowDown' || e.key.toLowerCase() === 'w' || e.key === 'ArrowUp') this.directionInput.y = 0;
-        // });
+        this.prevInput = {x: 0, y: 0};
     }
 
     // flag:  bool
@@ -231,96 +233,17 @@ class Renderer {
 
     //
     updateTransforms(time, delta_time) {
+        if(this.slide_idx === 3) this.slide3Input();
+
         const dt_actual = delta_time/1000;
         let currentModel = this.models[`slide${this.slide_idx}`];
-
-        if(this.slide_idx === 3) {
-            const pacTop = currentModel[0];
-            pacTop.velocity.translate.x = 200 * this.directionInput.x;
-            pacTop.velocity.translate.y = 200 * this.directionInput.y;
-            const pacBottom = currentModel[1];
-            pacBottom.velocity.translate.x = 200 * this.directionInput.x;
-            pacBottom.velocity.translate.y = 200 * this.directionInput.y;
-
-            if(this.directionInput.x === -1) {
-                pacTop.state.currentScale = {x: -1, y: -1};
-                pacBottom.state.currentScale = {x: -1, y: 1};
-            } else {
-                pacTop.state.currentScale = {x: 1, y: 1};
-                pacBottom.state.currentScale = {x: 1, y: -1};
-            }
-
-
-            if(pacTop.state.currentRotation > pacTop.maxRotation) {
-                pacTop.state.currentRotation = pacTop.maxRotation;
-                pacTop.velocity.rotate = -50;
-            }
-            if(pacTop.state.currentRotation < pacTop.minRotation) {
-                pacTop.state.currentRotation = pacTop.minRotation;
-                pacTop.velocity.rotate = 50;
-            }
-
-            if(pacBottom.state.currentRotation > pacBottom.maxRotation) {
-                pacBottom.state.currentRotation = pacBottom.maxRotation;
-                pacBottom.velocity.rotate = -50;
-            }
-            if(pacBottom.state.currentRotation < pacBottom.minRotation) {
-                pacBottom.state.currentRotation = pacBottom.minRotation;
-                pacBottom.velocity.rotate = 50;
-            }
-        }
-
+        
         for(const model of currentModel) {
             // Update state based on velocity
             model.state.offset.x += model.velocity.translate.x * dt_actual;
             model.state.offset.y += model.velocity.translate.y * dt_actual;
 
-            // Slide 0 collison
-            if (this.slide_idx === 0) {
-                const centerX = model.state.midpoint.x + model.state.offset.x; 
-                const centerY = model.state.midpoint.y + model.state.offset.y; 
-                const radius = model.radius;
-
-                // Right wall
-                if (centerX + radius >= this.canvas.width && model.velocity.translate.x > 0) {
-                    model.velocity.translate.x *= -1;
-                }
-
-                // Left Wall
-                 if (centerX - radius <= 0 && model.velocity.translate.x < 0) {
-                    model.velocity.translate.x *= -1;
-                }   
-                
-                // Bottom Floor
-                if (centerY + radius >= this.canvas.height && model.velocity.translate.y > 0) {
-                    model.velocity.translate.y *= -1;
-                }
-
-                // Top Cieling 
-                if (centerY - radius <= 0 && model.velocity.translate.y < 0) {
-                    model.velocity.translate.y *= -1;
-                }
-            }
-
             model.state.currentRotation += model.velocity.rotate * dt_actual;
-
-                if (this.slide_idx === 2) {
-                    if (model.state.currentScale.x >= model.maxScale.x && model.velocity.scale.x > 0) {
-                        model.velocity.scale.x *= -1;
-                    }
-
-                    if (model.state.currentScale.x <= model.minScale.x && model.velocity.scale.x < 0) {
-                        model.velocity.scale.x *= -1;
-                    }
-
-                    if (model.state.currentScale.y >= model.maxScale.y && model.velocity.scale.y > 0) {
-                        model.velocity.scale.y *= -1;
-                    }
-
-                    if (model.state.currentScale.y <= model.minScale.y && model.velocity.scale.y < 0) {
-                        model.velocity.scale.y *= -1;
-                    }
-                }
             
 
             model.state.currentScale.x += model.velocity.scale.x * dt_actual;
@@ -348,8 +271,181 @@ class Renderer {
 
             // Multiply all matrices together
             model.transform = Matrix.multiply([translatePoint, rotate, scale, translateOrigin]);
+
+            // Apply physics calculations for individual slides
+            if (this.slide_idx === 0) this.slide0Physics();
+            else if(this.slide_idx === 1) this.slide1Physics();
+            else if(this.slide_idx === 2) this.slide2Physics();
+            else if(this.slide_idx === 3) this.slide3Physics();
         }
         
+    }
+
+    slide0Physics() {
+        const model = this.models.slide0[0];
+        const centerX = model.state.midpoint.x + model.state.offset.x; 
+        const centerY = model.state.midpoint.y + model.state.offset.y; 
+        const radius = model.radius;
+
+        // Right wall
+        if (centerX + radius >= this.canvas.width && model.velocity.translate.x > 0) {
+            model.velocity.translate.x *= -1;
+        }
+
+        // Left Wall
+            if (centerX - radius <= 0 && model.velocity.translate.x < 0) {
+            model.velocity.translate.x *= -1;
+        }   
+        
+        // Bottom Floor
+        if (centerY + radius >= this.canvas.height && model.velocity.translate.y > 0) {
+            model.velocity.translate.y *= -1;
+        }
+
+        // Top Cieling 
+        if (centerY - radius <= 0 && model.velocity.translate.y < 0) {
+            model.velocity.translate.y *= -1;
+                }
+    }
+
+    slide1Physics() {
+        const currentModel = this.models.slide1;
+        const hexagon = currentModel[1];
+        const triangle = currentModel[2];
+
+        hexagon.velocity.rotate += hexagon.rotateAccel;
+        if(hexagon.velocity.rotate >= hexagon.maxRotationVelocity) hexagon.velocity.rotate = hexagon.minRotationVelocity;
+
+        triangle.velocity.rotate += triangle.rotateAccel;
+        if(triangle.velocity.rotate >= triangle.maxRotationVelocity) {
+            triangle.velocity.rotate = triangle.maxRotationVelocity;
+            triangle.rotateAccel = -1;
+        } else if(triangle.velocity.rotate <= triangle.minRotationVelocity) {
+            triangle.velocity.rotate = triangle.minRotationVelocity;
+            triangle.rotateAccel = 1;
+        }
+
+
+    }
+
+    slide2Physics() {
+        for(const model of this.models.slide2) {
+            if (model.state.currentScale.x >= model.maxScale.x && model.velocity.scale.x > 0) {
+                model.velocity.scale.x *= -1;
+            }
+
+            if (model.state.currentScale.x <= model.minScale.x && model.velocity.scale.x < 0) {
+                model.velocity.scale.x *= -1;
+            }
+
+            if (model.state.currentScale.y >= model.maxScale.y && model.velocity.scale.y > 0) {
+                model.velocity.scale.y *= -1;
+            }
+
+            if (model.state.currentScale.y <= model.minScale.y && model.velocity.scale.y < 0) {
+                model.velocity.scale.y *= -1;
+            }
+        }
+    }
+
+    slide3Input() {
+        const pacTop = this.models.slide3[0];
+
+        // Prevent input toward wall
+        const centerX = pacTop.state.midpoint.x + pacTop.state.offset.x; 
+        const centerY = pacTop.state.midpoint.y + pacTop.state.offset.y; 
+        const diameter = pacTop.radius * 2;
+        if(centerX + diameter >= this.canvas.width && this.directionInput.x === 1) this.directionInput.x = 0;
+        if(centerX - diameter <= 0 && this.directionInput.x === -1) this.directionInput.x = 0;
+        if(centerY + diameter >= this.canvas.height && this.directionInput.y === 1) this.directionInput.y = 0;
+        if(centerY - diameter <= 0 && this.directionInput.y === -1) this.directionInput.y = 0;
+
+        pacTop.velocity.translate.x = 200 * this.directionInput.x;
+        pacTop.velocity.translate.y = 200 * this.directionInput.y;
+        const pacBottom = this.models.slide3[1];
+        pacBottom.velocity.translate.x = 200 * this.directionInput.x;
+        pacBottom.velocity.translate.y = 200 * this.directionInput.y;
+
+        if(this.directionInput.x === -1 && this.prevInput.x !== -1) {
+            pacTop.state.currentScale = {x: -1, y: -1};
+            pacTop.minRotation = 0;
+            pacTop.maxRotation = 15;
+            pacTop.state.currentRotation = 0;
+            pacTop.velocity.rotate = 50;
+            pacBottom.state.currentScale = {x: -1, y: 1};
+            pacBottom.minRotation = -15;
+            pacBottom.maxRotation = 0;
+            pacBottom.state.currentRotation = 0;
+            pacBottom.velocity.rotate = -50;
+        } 
+        
+        
+        if(this.directionInput.x === 1 && this.prevInput.x !== 1) {
+            pacTop.state.currentScale = {x: 1, y: 1};
+            pacTop.minRotation = 0;
+            pacTop.maxRotation = 15;
+            pacTop.state.currentRotation = 0;
+            pacTop.velocity.rotate = 50;
+            pacBottom.state.currentScale = {x: 1, y: -1};
+            pacBottom.minRotation = -15;
+            pacBottom.maxRotation = 0;
+            pacBottom.state.currentRotation = 0;
+            pacBottom.velocity.rotate = -50;
+        }
+
+        if(this.directionInput.y === 1 && this.prevInput.y !== 1) {
+            pacTop.state.currentScale = {x: 1, y: 1};
+            pacTop.minRotation = 90;
+            pacTop.maxRotation = 105;
+            pacTop.state.currentRotation = 90;
+            pacTop.velocity.rotate = 50;
+            pacBottom.state.currentScale = {x: 1, y: -1};
+            pacBottom.minRotation = 75;
+            pacBottom.maxRotation = 90;
+            pacBottom.state.currentRotation = 90;
+            pacBottom.velocity.rotate = -50;
+        }
+
+        if(this.directionInput.y === -1 && this.prevInput.y !== -1) {
+            pacTop.state.currentScale = {x: -1, y: -1};
+            pacTop.minRotation = 90;
+            pacTop.maxRotation = 105;
+            pacTop.state.currentRotation = 90;
+            pacTop.velocity.rotate = 50;
+            pacBottom.state.currentScale = {x: -1, y: 1};
+            pacBottom.minRotation = 75;
+            pacBottom.maxRotation = 90;
+            pacBottom.state.currentRotation = 90;
+            pacBottom.velocity.rotate = -50;
+        }
+        
+
+        this.prevInput = {x: this.directionInput.x, y: this.directionInput.y};
+    }
+
+    slide3Physics() {
+        const pacTop = this.models.slide3[0];
+        const pacBottom = this.models.slide3[1];
+
+        if(pacTop.state.currentRotation > pacTop.maxRotation) {
+            pacTop.state.currentRotation = pacTop.maxRotation;
+            pacTop.velocity.rotate = -50;
+        }
+        if(pacTop.state.currentRotation < pacTop.minRotation) {
+            pacTop.state.currentRotation = pacTop.minRotation;
+            pacTop.velocity.rotate = 50;
+        }
+
+        if(pacBottom.state.currentRotation > pacBottom.maxRotation) {
+            pacBottom.state.currentRotation = pacBottom.maxRotation;
+            pacBottom.velocity.rotate = -50;
+        }
+        if(pacBottom.state.currentRotation < pacBottom.minRotation) {
+            pacBottom.state.currentRotation = pacBottom.minRotation;
+            pacBottom.velocity.rotate = 50;
+        }
+
+
     }
     
     //
